@@ -24,18 +24,30 @@ async def ai_reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
     }
 
     try:
-        response = requests.post(url, headers=headers, json=data)
+        response = requests.post(url, headers=headers, json=data, timeout=15)
         result = response.json()
 
-        reply = result["choices"][0]["message"]["content"]
+        if "choices" in result:
+            reply = result["choices"][0]["message"]["content"]
+        else:
+            reply = "❌ AI ما رد، تأكد من المفتاح"
 
-    except:
+    except Exception as e:
+        print(e)
         reply = "❌ صار خطأ، جرب مرة ثانية"
 
     await update.message.reply_text(reply)
 
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("🤖 ابعت أي رسالة وأنا أرد عليك")
+
+
 app = ApplicationBuilder().token(TOKEN).build()
 
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, ai_reply))
+
+from telegram.ext import CommandHandler
+app.add_handler(CommandHandler("start", start))
 
 app.run_polling()
